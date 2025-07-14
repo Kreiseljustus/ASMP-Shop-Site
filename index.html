@@ -24,7 +24,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-image: url('/background.jpg');
+        background-image: url('/asmp/background.jpg');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
@@ -62,24 +62,7 @@
         max-width: 1200px;
         margin: 24px auto 0 auto;
         position: relative;
-        padding: 0 180px; /* Added padding for ads */
-    }
-    .ad-image {
-        position: fixed;
-        width: 15%;
-        height: 100vh;
-        z-index: 100;
-        object-fit: contain; /* Changed to contain to maintain aspect ratio */
-        max-height: 100vh; /* Added max-height */
-        max-width: 15vw; /* Added max-width */
-    }
-    .ad-image.left {
-        top: 0;
-        left: 20px;
-    }
-    .ad-image.right {
-        top: 0;
-        right: 20px;
+        padding: 0;
     }
     .table-container {
         background: rgba(0, 0, 0, 0.8);
@@ -301,11 +284,10 @@
             let prices;
             
             if (itemHistory.length === 0) {
-                // If no history, create a constant line with current price
                 const currentItem = window.items.find(item => item.item === itemName);
                 const currentPrice = currentItem ? currentItem.price : 0;
                 
-                // Create 10 evenly spaced points over the last 30 days
+                
                 const now = new Date();
                 dates = Array.from({length: 10}, (_, i) => {
                     const date = new Date(now);
@@ -415,7 +397,6 @@
             }
         }
 
-        // Render table rows dynamically
         window.addEventListener('DOMContentLoaded', () => {
             const tbody = document.querySelector('tbody');
             tbody.innerHTML = '';

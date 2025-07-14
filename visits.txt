@@ -1,6 +1,6 @@
 {
   "2025-07-14": {
-    "shops": 5,
-    "waytones": 2
+    "shops": 9,
+    "waytones": 4
   }
 }

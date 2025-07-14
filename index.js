@@ -13,7 +13,98 @@ setInterval(() => {
     priceHistory = loadPriceHistory();
 }, 30000);
 
-app.use(express.static(__dirname))
+app.get('/asmp', (req, res) => {
+    res.redirect('/asmp/shops');
+});
+
+app.get('/asmp/shops', (req, res) => {
+    console.log("Get request received");
+    incrementVisit('shops');
+    // Read the HTML template from index.html
+    let html = fs.readFileSync(__dirname + '/index.html', 'utf-8');
+    // Inject items and priceHistory as JSON into the template
+    html = html.replace('<!--ITEMS_JSON-->', JSON.stringify(items));
+    html = html.replace('<!--PRICE_HISTORY_JSON-->', JSON.stringify(priceHistory));
+    res.send(html);
+});
+
+app.get('/asmp/waytones', (req, res) => {
+    incrementVisit('waytones');
+    res.sendFile(__dirname + '/waytones.html');
+});
+
+app.post('/asmp/post', (req, res) => {
+    console.log("Got data")
+    if (!Array.isArray(req.body)) {
+        console.log("Invalid data format: " + req.body)
+        return res.status(400).send("Invalid data format.");
+    }
+
+console.log(req.body)
+
+    let newItems = req.body.map(item => ({
+            Owner: item.Owner,
+            position: item.position,
+            price: item.price,
+            item: item.item,
+            amount: item.amount,
+            dimension: item.dimension,
+            action: item.action,
+            timestamp: new Date().toISOString()
+        }));
+
+    // Update existing items or add new ones
+    newItems.forEach(newItem => {
+        const existingItemIndex = items.findIndex(item => 
+            JSON.stringify(item.position) === JSON.stringify(newItem.position)
+        );
+        
+        if (existingItemIndex !== -1) {
+            // Update existing item
+            items[existingItemIndex] = newItem;
+
+
+                } else {
+            // Add new item
+            items.push(newItem);
+        }
+    });
+
+    updatePriceHistory(items);
+    saveItems();
+    res.status(200).send("Data received and stored.");
+});
+
+app.use((req, res) => {
+    res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Page Not Found</title>
+            <style>
+            @font-face {
+                font-family: 'Minecraftia';
+                src: url('Minecraftia-Regular.ttf') format('truetype')
+            }
+                body {
+                    font-family: 'Minecraftia', Arial, sans-serif;
+                    text-align: center;
+                    padding: 50px;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>404 - Page Not Found</h1>
+            <p>The page you're looking for doesn't exist.</p>
+            <p>Requested path: ${req.path}</p>
+        </body>
+        </html>
+    `);
+});
+
+app.use(express.static(__dirname));
+
+app.listen(49876, () => console.log('Server running on port 49876'));
 
 function loadItems() {
     if (fs.existsSync(FILE_PATH)) {
@@ -118,94 +209,3 @@ function incrementVisit(page) {
     visits[today][page]++;
     saveVisits(visits);
 }
-
-app.get('/asmp', (req, res) => {
-    res.redirect('/asmp/shops');
-});
-
-app.get('/asmp/shops', (req, res) => {
-    console.log("Get request received");
-    incrementVisit('shops');
-    // Read the HTML template from index.html
-    let html = fs.readFileSync('index.html', 'utf-8');
-    // Inject items and priceHistory as JSON into the template
-    html = html.replace('<!--ITEMS_JSON-->', JSON.stringify(items));
-    html = html.replace('<!--PRICE_HISTORY_JSON-->', JSON.stringify(priceHistory));
-    res.send(html);
-});
-
-app.get('/asmp/waytones', (req, res) => {
-    incrementVisit('waytones');
-    res.sendFile(__dirname + '/waytones.html');
-});
-
-app.post('/asmp/post', (req, res) => {
-    console.log("Got data")
-    if (!Array.isArray(req.body)) {
-        console.log("Invalid data format: " + req.body)
-        return res.status(400).send("Invalid data format.");
-    }
-
-console.log(req.body)
-
-    let newItems = req.body.map(item => ({
-            Owner: item.Owner,
-            position: item.position,
-            price: item.price,
-            item: item.item,
-            amount: item.amount,
-            dimension: item.dimension,
-            action: item.action,
-            timestamp: new Date().toISOString()
-        }));
-
-    // Update existing items or add new ones
-    newItems.forEach(newItem => {
-        const existingItemIndex = items.findIndex(item => 
-            JSON.stringify(item.position) === JSON.stringify(newItem.position)
-        );
-        
-        if (existingItemIndex !== -1) {
-            // Update existing item
-            items[existingItemIndex] = newItem;
-
-
-                } else {
-            // Add new item
-            items.push(newItem);
-        }
-    });
-
-    updatePriceHistory(items);
-    saveItems();
-    res.status(200).send("Data received and stored.");
-});
-
-app.use((req, res) => {
-    res.status(404).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Page Not Found</title>
-            <style>
-            @font-face {
-                font-family: 'Minecraftia';
-                src: url('Minecraftia-Regular.ttf') format('truetype')
-            }
-                body {
-                    font-family: 'Minecraftia', Arial, sans-serif;
-                    text-align: center;
-                    padding: 50px;
-                }
-            </style>
-        </head>
-        <body>
-            <h1>404 - Page Not Found</h1>
-            <p>The page you're looking for doesn't exist.</p>
-            <p>Requested path: ${req.path}</p>
-        </body>
-        </html>
-    `);
-});
-
-app.listen(49876, () => console.log('Server running on port 49876'));
