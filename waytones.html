@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waytones</title>
+    <style>
+    @font-face {
+        font-family: 'Minecraftia';
+        src: url('Minecraftia-Regular.ttf') format('truetype')
+    }
+    body {
+        font-family: 'Minecraftia', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        position: relative;
+        min-height: 100vh;
+    }
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('/background.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        z-index: -1;
+    }
+    .navbar {
+        width: 100%;
+        background: rgba(0,0,0,0.85);
+        padding: 18px 0 12px 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .nav-link {
+        color: #fff;
+        font-family: 'Minecraftia', Arial, sans-serif;
+        font-size: 18px;
+        text-decoration: none;
+        margin: 0 32px;
+        padding: 8px 24px;
+        border-radius: 18px;
+        transition: background 0.2s, color 0.2s, transform 0.2s;
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        font-weight: bold;
+    }
+    .nav-link:hover {
+        background: linear-gradient(45deg, #45a049, #4CAF50);
+        color: #fff;
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        position: relative;
+        padding: 0 180px;
+        margin-top: 70px;
+        text-align: center;
+    }
+    .coming-soon {
+        color: #fff;
+        font-size: 2rem;
+        margin-top: 100px;
+        background: rgba(0,0,0,0.7);
+        padding: 40px;
+        border-radius: 16px;
+        display: inline-block;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/index.html" class="nav-link">Shop</a>
+        <a href="/waytones.html" class="nav-link">Waytones</a>
+    </nav>
+    <div class="container">
+        <div class="coming-soon">Waytones page coming soon!</div>
+    </div>
+</body>
+</html> 

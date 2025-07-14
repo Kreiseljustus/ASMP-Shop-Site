@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASMP Shops</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+    @font-face {
+        font-family: 'Minecraftia';
+        src: url('Minecraftia-Regular.ttf') format('truetype')
+    }
+    body {
+        font-family: 'Minecraftia', Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        position: relative;
+        min-height: 100vh;
+    }
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('/background.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        z-index: -1;
+    }
+    .navbar {
+        width: 100%;
+        background: rgba(0,0,0,0.85);
+        padding: 18px 0 12px 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1000;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .nav-link {
+        color: #fff;
+        font-family: 'Minecraftia', Arial, sans-serif;
+        font-size: 18px;
+        text-decoration: none;
+        margin: 0 32px;
+        padding: 8px 24px;
+        border-radius: 18px;
+        transition: background 0.2s, color 0.2s, transform 0.2s;
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        font-weight: bold;
+    }
+    .nav-link:hover {
+        background: linear-gradient(45deg, #45a049, #4CAF50);
+        color: #fff;
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        position: relative;
+        padding: 0 180px; /* Added padding for ads */
+        margin-top: 70px; /* Add margin to avoid navbar overlap */
+    }
+    .ad-image {
+        position: fixed;
+        width: 15%;
+        height: 100vh;
+        z-index: 100;
+        object-fit: contain; /* Changed to contain to maintain aspect ratio */
+        max-height: 100vh; /* Added max-height */
+        max-width: 15vw; /* Added max-width */
+    }
+    .ad-image.left {
+        top: 0;
+        left: 20px;
+    }
+    .ad-image.right {
+        top: 0;
+        right: 20px;
+    }
+    .table-container {
+        background: rgba(0, 0, 0, 0.8);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        width: 100%;
+    }
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    th, td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    th {
+        background-color: rgba(255, 255, 255, 0.9);
+        color: #333;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    th:hover {
+        background-color: rgba(255, 255, 255, 1);
+    }
+    td {
+        color: #fff;
+    }
+    tr:hover td {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    .search-container {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    #searchBar {
+        width: 100%;
+        max-width: 300px;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 25px;
+        background: rgba(255, 255, 255, 0.9);
+        font-size: 16px;
+        transition: all 0.3s;
+        font-family: inherit;
+    }
+    #searchBar:focus {
+        outline: none;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 1);
+    }
+    .contribute-btn {
+        background: linear-gradient(45deg, #4CAF50, #45a049);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-family: 'Minecraftia', Arial, sans-serif;
+        font-size: 14px;
+        font-weight: bold;
+        transition: all 0.3s;
+        white-space: nowrap;
+    }
+    .contribute-btn:hover {
+        background: linear-gradient(45deg, #45a049, #4CAF50);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.7);
+    }
+    .modal-content {
+        background-color: rgba(0, 0, 0, 0.9);
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 800px;
+        border-radius: 10px;
+        color: white;
+    }
+    .contribute-modal-content {
+        background-color: rgba(0, 0, 0, 0.9);
+        margin: 15% auto;
+        padding: 30px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 600px;
+        border-radius: 10px;
+        color: white;
+        text-align: center;
+    }
+    .contribute-modal-content h2 {
+        color: #4CAF50;
+        margin-bottom: 20px;
+    }
+    .contribute-modal-content p {
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+    .modrinth-link {
+        display: inline-block;
+        background: linear-gradient(45deg, #00AF5C, #00C853);
+        color: white;
+        text-decoration: none;
+        padding: 15px 30px;
+        border-radius: 25px;
+        font-weight: bold;
+        font-size: 16px;
+        transition: all 0.3s;
+        margin-top: 10px;
+    }
+    .modrinth-link:hover {
+        background: linear-gradient(45deg, #00C853, #00AF5C);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .close:hover {
+        color: white;
+    }
+    .chart-container {
+        position: relative;
+        height: 400px;
+        width: 100%;
+    }
+    button {
+        background-color: rgba(255, 255, 255, 0.9);
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: 'Minecraftia', Arial, sans-serif;
+        transition: background-color 0.3s;
+    }
+    button:hover {
+        background-color: rgba(255, 255, 255, 1);
+    }
+    </style>
+    <script id="items-data" type="application/json"><!--ITEMS_JSON--></script>
+    <script id="price-history-data" type="application/json"><!--PRICE_HISTORY_JSON--></script>
+    <script>
+        window.items = JSON.parse(document.getElementById('items-data').textContent);
+        window.priceHistory = JSON.parse(document.getElementById('price-history-data').textContent);
+        let sortOrder = {};
+        let currentChart = null;
+    </script>
+    <script>
+        function sortTable(column) {
+            if (!sortOrder[column]) sortOrder[column] = 'asc';
+
+            const rows = Array.from(document.querySelector("tbody").rows);
+            rows.sort((a, b) => {
+                let valA = a.cells[column].textContent.trim();
+                let valB = b.cells[column].textContent.trim();
+                
+                if (!isNaN(valA) && !isNaN(valB)) {
+                    valA = parseFloat(valA);
+                    valB = parseFloat(valB);
+                }
+
+                return sortOrder[column] === 'asc' ? valA > valB ? 1 : -1 : valA < valB ? 1 : -1;
+            });
+
+            sortOrder[column] = sortOrder[column] === 'asc' ? 'desc' : 'asc';
+
+            document.querySelector("tbody").append(...rows);
+
+            document.querySelectorAll("th").forEach((th, index) => {
+                if (index === column) {
+                    th.innerHTML = th.innerHTML.replace(/ ▲| ▼/g, "") + (sortOrder[column] === 'asc' ? " ▲" : " ▼");
+                } else {
+                    th.innerHTML = th.innerHTML.replace(/ ▲| ▼/g, "");
+                }
+            });
+        }
+
+        function searchItems() {
+            const query = document.getElementById("searchBar").value.toLowerCase();
+            const rows = document.querySelectorAll("tbody tr");
+
+            rows.forEach(row => {
+                let text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? "" : "none";
+            });
+        }
+
+        function showPriceHistory(itemName) {
+            const modal = document.getElementById('priceModal');
+            const itemHistory = window.priceHistory[itemName]?.history || [];
+            
+            modal.style.display = 'block';
+            
+            const ctx = document.getElementById('priceChart');
+            
+            let dates;
+            let prices;
+            
+            if (itemHistory.length === 0) {
+                // If no history, create a constant line with current price
+                const currentItem = window.items.find(item => item.item === itemName);
+                const currentPrice = currentItem ? currentItem.price : 0;
+                
+                // Create 10 evenly spaced points over the last 30 days
+                const now = new Date();
+                dates = Array.from({length: 10}, (_, i) => {
+                    const date = new Date(now);
+                    date.setDate(date.getDate() - (30 * (9-i) / 9));
+                    return date.toLocaleDateString();
+                });
+                prices = Array(10).fill(currentPrice);
+            } else {
+                dates = itemHistory.map(h => new Date(h.timestamp).toLocaleDateString());
+                prices = itemHistory.map(h => h.averagePrice);
+            }
+            
+            if (currentChart) {
+                currentChart.destroy();
+            }
+            
+            currentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Average Price',
+                        data: prices,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Price History for ' + itemName,
+                            color: 'white',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            labels: {
+                                color: 'white',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'white',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'white',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('priceModal');
+            modal.style.display = 'none';
+            if (currentChart) {
+                currentChart.destroy();
+                currentChart = null;
+            }
+        }
+
+        function showContributeModal() {
+            const modal = document.getElementById('contributeModal');
+            modal.style.display = 'block';
+        }
+
+        function closeContributeModal() {
+            const modal = document.getElementById('contributeModal');
+            modal.style.display = 'none';
+        }
+
+        // Add event listener for clicking outside modal
+        window.onclick = function(event) {
+            const priceModal = document.getElementById('priceModal');
+            const contributeModal = document.getElementById('contributeModal');
+            if (event.target == priceModal) {
+                closeModal();
+            }
+            if (event.target == contributeModal) {
+                closeContributeModal();
+            }
+        }
+
+        // Render table rows dynamically
+        window.addEventListener('DOMContentLoaded', () => {
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = '';
+            for (const item of window.items) {
+                let dimension;
+                if (item.dimension == 0) dimension = "Overworld";
+                else if (item.dimension == 1) dimension = "Nether";
+                else if (item.dimension == 2) dimension = "End";
+                else dimension = "Unknown (how)";
+
+                let action;
+                if (item.action == 0) action = "Buying";
+                else if (item.action == 1) action = "Selling";
+                else if (item.action == 2) action = "Out of Stock";
+                else action = "Unknown";
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.Owner}</td>
+                    <td>${item.item}</td>
+                    <td>${action}</td>
+                    <td>${item.price}</td>
+                    <td>${item.amount}</td>
+                    <td>[${item.position.join(", ")}]</td>
+                    <td>${dimension}</td>
+                    <td><button onclick="showPriceHistory('${item.item}')">Show History</button></td>
+                `;
+                tbody.appendChild(tr);
+            }
+        });
+    </script>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/index.html" class="nav-link">Shop</a>
+        <a href="/waytones.html" class="nav-link">Waytones</a>
+    </nav>
+    <div class="container">
+        <div class="table-container">
+            <div class="search-container">
+                <input type="text" id="searchBar" placeholder="Search items..." oninput="searchItems()">
+                <button class="contribute-btn" onclick="showContributeModal()">Contribute</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">Owner</th>
+                        <th onclick="sortTable(1)">Item</th>
+                        <th onclick="sortTable(2)">Action</th>
+                        <th onclick="sortTable(3)">Price</th>
+                        <th onclick="sortTable(4)">Amount</th>
+                        <th onclick="sortTable(5)">Position</th>
+                        <th onclick="sortTable(6)">Dimension</th>
+                        <th>History</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Table rows will be rendered by JS -->
+                </tbody>
+            </table>
+        </div>
+        <div id="priceModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div id="contributeModal" class="modal">
+            <div class="contribute-modal-content">
+                <span class="close" onclick="closeContributeModal()">&times;</span>
+                <h2>Contribute to ASMP Shops</h2>
+                <p>Help us keep the shop data up to date by automatically contributing your server's shops!</p>
+                <p>Download the <strong>ASMP Shop Get</strong> mod from Modrinth to automatically collect and submit shop data from your server.</p>
+                <a href="https://modrinth.com/mod/asmp-shopget" target="_blank" class="modrinth-link">
+                    Download on Modrinth
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 
