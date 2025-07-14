@@ -79,24 +79,64 @@ function updatePriceHistory(items) {
     savePriceHistory();
 }
 
-app.get('/asmp', (req, res) => {
-    console.log("Get request received");
-    const VISITS_FILE = "visits.txt";
-    let visits = 0;
-    
-    if (fs.existsSync(VISITS_FILE)) {
-        visits = parseInt(fs.readFileSync(VISITS_FILE, 'utf-8'));
-    }
-    
-    visits++;
-    fs.writeFileSync(VISITS_FILE, visits.toString(), 'utf-8');
+function getToday() {
+    return new Date().toISOString().slice(0, 10);
+}
 
+function loadVisits() {
+    const VISITS_FILE = "visits.txt";
+    if (fs.existsSync(VISITS_FILE)) {
+        const data = fs.readFileSync(VISITS_FILE, 'utf-8');
+        try {
+            const parsed = JSON.parse(data);
+            if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                return parsed;
+            }
+        } catch (e) {
+            // If not JSON, migrate from old format (single number)
+            const today = getToday();
+            const count = parseInt(data);
+            if (!isNaN(count)) {
+                const migrated = { [today]: { shops: count } };
+                saveVisits(migrated); // Save migration immediately
+                return migrated;
+            }
+        }
+    }
+    return {};
+}
+
+function saveVisits(visits) {
+    fs.writeFileSync('visits.txt', JSON.stringify(visits, null, 2), 'utf-8');
+}
+
+function incrementVisit(page) {
+    const today = getToday();
+    let visits = loadVisits();
+    if (!visits[today]) visits[today] = {};
+    if (!visits[today][page]) visits[today][page] = 0;
+    visits[today][page]++;
+    saveVisits(visits);
+}
+
+app.get('/asmp', (req, res) => {
+    res.redirect('/asmp/shops');
+});
+
+app.get('/asmp/shops', (req, res) => {
+    console.log("Get request received");
+    incrementVisit('shops');
     // Read the HTML template from index.html
     let html = fs.readFileSync('index.html', 'utf-8');
     // Inject items and priceHistory as JSON into the template
     html = html.replace('<!--ITEMS_JSON-->', JSON.stringify(items));
     html = html.replace('<!--PRICE_HISTORY_JSON-->', JSON.stringify(priceHistory));
     res.send(html);
+});
+
+app.get('/asmp/waytones', (req, res) => {
+    incrementVisit('waytones');
+    res.sendFile(__dirname + '/waytones.html');
 });
 
 app.post('/asmp/post', (req, res) => {
