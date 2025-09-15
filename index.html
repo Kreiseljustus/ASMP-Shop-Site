@@ -64,12 +64,49 @@
         position: relative;
         padding: 0;
     }
+    .advertisement {
+        position: fixed;
+        width: 200px;
+        height: 500px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.2s ease;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 100;
+    }
+    .advertisement:first-of-type {
+        left: 20px;
+    }
+    .advertisement:last-of-type {
+        right: 20px;
+    }
     .table-container {
         background: rgba(0, 0, 0, 0.8);
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
         width: 100%;
+    }
+    .advertisement:hover {
+        transform: translateY(-50%) scale(1.02);
+    }
+    .advertisement img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    .table-container {
+        background: rgba(0, 0, 0, 0.8);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
     }
     table {
         width: 100%;
@@ -223,12 +260,94 @@
     button:hover {
         background-color: rgba(255, 255, 255, 1);
     }
+    .deletion-btn {
+        background: linear-gradient(45deg, #e53935, #b71c1c) !important;
+        color: white !important;
+    }
+    .deletion-btn:hover {
+        background: linear-gradient(45deg, #b71c1c, #e53935) !important;
+    }
+    .deletion-modal-content {
+        background-color: rgba(0, 0, 0, 0.9);
+        margin: 15% auto;
+        padding: 30px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 600px;
+        border-radius: 10px;
+        color: white;
+        text-align: center;
+    }
+    .deletion-modal-content h2 {
+        color: #e53935;
+        margin-bottom: 20px;
+    }
+    .deletion-modal-content p {
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+    .news-container {
+        background: rgba(0, 0, 0, 0.85);
+        padding: 8px 20px;
+        margin: 0 auto;
+        max-width: 1200px;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        text-align: center;
+        position: relative;
+        z-index: 999;
+        overflow: hidden;
+        height: 42px;
+    }
+    .news-message {
+        color: #fff;
+        font-family: 'Minecraftia', Arial, sans-serif;
+        font-size: 16px;
+        margin: 0;
+        padding: 12px 0 8px 0;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        animation: newsGlow 2s ease-in-out infinite alternate;
+        position: absolute;
+        width: 100%;
+        left: 0;
+        top: 0;
+        opacity: 0;
+        transform: translateY(100%);
+        transition: all 0.5s ease-in-out;
+    }
+    .news-message.active {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .news-message.next {
+        transform: translateY(-100%);
+    }
+    @keyframes newsGlow {
+        from {
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8), 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+        to {
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8), 0 0 10px rgba(76, 175, 80, 0.6);
+        }
+    }
+    .news-priority-1 {
+        color: #4CAF50;
+    }
+    .news-priority-2 {
+        color: #FF9800;
+    }
+    .news-priority-3 {
+        color: #f44336;
+    }
     </style>
     <script id="items-data" type="application/json"><!--ITEMS_JSON--></script>
     <script id="price-history-data" type="application/json"><!--PRICE_HISTORY_JSON--></script>
+    <script id="news-data" type="application/json"><!--NEWS_JSON--></script>
     <script>
         window.items = JSON.parse(document.getElementById('items-data').textContent);
         window.priceHistory = JSON.parse(document.getElementById('price-history-data').textContent);
+        window.news = JSON.parse(document.getElementById('news-data').textContent);
         let sortOrder = {};
         let currentChart = null;
     </script>
@@ -397,7 +516,90 @@
             }
         }
 
+        let currentNewsIndex = 0;
+        let newsInterval = null;
+
+        function displayNews() {
+            const newsContainer = document.getElementById('newsContainer');
+            
+            if (!window.news || !window.news.news) {
+                newsContainer.style.display = 'none';
+                return;
+            }
+            
+            const now = new Date();
+            const activeNews = window.news.news.filter(newsItem => {
+                if (!newsItem.active) return false;
+                
+                const startDate = new Date(newsItem.startDate);
+                const durationMs = (newsItem.duration.days * 24 * 60 * 60 * 1000) +
+                                 (newsItem.duration.hours * 60 * 60 * 1000) +
+                                 (newsItem.duration.minutes * 60 * 1000);
+                const endDate = new Date(startDate.getTime() + durationMs);
+                
+                return now >= startDate && now <= endDate;
+            });
+            
+            if (activeNews.length === 0) {
+                newsContainer.style.display = 'none';
+                return;
+            }
+            
+            // Sort by priority (lower number = higher priority)
+            activeNews.sort((a, b) => a.priority - b.priority);
+            
+            // Clear existing messages
+            newsContainer.innerHTML = '';
+            
+            // Create news message elements
+            activeNews.forEach((newsItem, index) => {
+                const messageElement = document.createElement('p');
+                messageElement.className = `news-message news-priority-${newsItem.priority}`;
+                messageElement.textContent = newsItem.message;
+                if (index === 0) {
+                    messageElement.classList.add('active');
+                }
+                newsContainer.appendChild(messageElement);
+            });
+            
+            newsContainer.style.display = 'block';
+            
+            // Start cycling if there are multiple news items
+            if (activeNews.length > 1) {
+                currentNewsIndex = 0;
+                startNewsCycle(activeNews.length);
+            }
+        }
+
+        function startNewsCycle(totalNews) {
+            if (newsInterval) {
+                clearInterval(newsInterval);
+            }
+            
+            newsInterval = setInterval(() => {
+                const messages = document.querySelectorAll('.news-message');
+                if (messages.length === 0) return;
+                
+                // Remove active class from current message
+                messages.forEach(msg => msg.classList.remove('active', 'next'));
+                
+                // Add next class to current message (slide up)
+                messages[currentNewsIndex].classList.add('next');
+                
+                // Move to next message
+                currentNewsIndex = (currentNewsIndex + 1) % totalNews;
+                
+                // Add active class to next message (slide in from bottom)
+                setTimeout(() => {
+                    messages[currentNewsIndex].classList.add('active');
+                }, 50);
+                
+            }, 4000); // Change every 4 seconds
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
+            displayNews();
+            
             const tbody = document.querySelector('tbody');
             tbody.innerHTML = '';
             for (const item of window.items) {
@@ -426,19 +628,36 @@
                 `;
                 tbody.appendChild(tr);
             }
+
+            // Handle advertisement images - hide divs if images fail to load
+            const adImages = document.querySelectorAll('.advertisement img');
+            adImages.forEach(img => {
+                img.addEventListener('error', function() {
+                    // Hide the entire advertisement div if image fails to load
+                    this.parentElement.style.display = 'none';
+                });
+            });
         });
     </script>
 </head>
 <body>
     <nav class="navbar">
-        <a href="/asmp/shops" class="nav-link">Shop</a>
+        <a href="/asmp/shops" class="nav-link">Shops</a>
         <a href="/asmp/waytones" class="nav-link">Waytones</a>
+        <a href="/asmp/info" class="nav-link">Info</a>
     </nav>
+    <div class="news-container" id="newsContainer">
+        <!-- News messages will be dynamically inserted here -->
+    </div>
     <div class="container">
+        <a href="https://discord.com/events/1337625910081490964/1410033355537387541" target="_blank" class="advertisement">
+            <img src="/asmp/ad1.jpg" alt="Advertisement 1">
+        </a>
         <div class="table-container">
             <div class="search-container">
                 <input type="text" id="searchBar" placeholder="Search items..." oninput="searchItems()">
                 <button class="contribute-btn" onclick="showContributeModal()">Contribute</button>
+                <button id="deletion-request-btn" class="contribute-btn deletion-btn" type="button">Request Shop/Waystone Deletion</button>
             </div>
             <table>
                 <thead>
@@ -458,6 +677,9 @@
                 </tbody>
             </table>
         </div>
+        <a href="https://discord.com/events/1337625910081490964/1410033355537387541" target="_blank" class="advertisement">
+            <img src="/asmp/ad2.jpg" alt="Advertisement 2">
+        </a>
         <div id="priceModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal()">&times;</span>
@@ -477,6 +699,26 @@
                 </a>
             </div>
         </div>
+
+        <!-- Modal structure -->
+        <div id="deletion-modal" class="modal">
+          <div class="deletion-modal-content">
+            <span id="close-deletion-modal" class="close">&times;</span>
+            <h2>Request Deletion</h2>
+            <p>Shop or waystone deletion can be requested on Discord.<br><b>Contact: crisel</b></p>
+          </div>
+        </div>
     </div>
+    <script>
+        // Modal logic
+        const deletionBtn = document.getElementById('deletion-request-btn');
+        const deletionModal = document.getElementById('deletion-modal');
+        const closeDeletionModal = document.getElementById('close-deletion-modal');
+        deletionBtn.onclick = () => { deletionModal.style.display = 'block'; };
+        closeDeletionModal.onclick = () => { deletionModal.style.display = 'none'; };
+        deletionModal && deletionModal.addEventListener('click', function(e) {
+          if (e.target === deletionModal) deletionModal.style.display = 'none';
+        });
+    </script>
 </body>
 </html> 
