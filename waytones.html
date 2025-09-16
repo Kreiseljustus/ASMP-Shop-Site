@@ -105,7 +105,7 @@
         gap: 15px;
         margin-bottom: 20px;
     }
-    #searchBar {
+    .search-container input  {
         width: 100%;
         max-width: 300px;
         padding: 12px 20px;
@@ -116,10 +116,17 @@
         transition: all 0.3s;
         font-family: inherit;
     }
-    #searchBar:focus {
+    .search-container input :focus {
         outline: none;
         box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         background: rgba(255, 255, 255, 1);
+    }
+    #position-container {
+        color: #fff;
+    }
+    #position-container input {
+        max-width: 80px;
+        text-align: center;
     }
     .contribute-btn {
         background: linear-gradient(45deg, #4CAF50, #45a049);
@@ -315,6 +322,12 @@
                 <button class="contribute-btn" onclick="showContributeModal()">Contribute</button>
                 <button id="deletion-request-btn" class="contribute-btn deletion-btn" type="button">Request Shop/Waystone Deletion</button>
             </div>
+            <div class="search-container" id="position-container">
+                Sort by closest to:
+                <input type="text" id="positionBarX" placeholder="X" oninput="closestWaystones()">
+                <input type="text" id="positionBarY" placeholder="Y" oninput="closestWaystones()">
+                <input type="text" id="positionBarZ" placeholder="Z" oninput="closestWaystones()">
+            </div>
             <table>
                 <thead>
                     <tr>
@@ -354,42 +367,42 @@
     <script>
         window.waystones = JSON.parse(document.getElementById('waystones-data').textContent);
         window.news = JSON.parse(document.getElementById('news-data').textContent);
-        
+
         let currentNewsIndex = 0;
         let newsInterval = null;
 
         function displayNews() {
             const newsContainer = document.getElementById('newsContainer');
-            
+
             if (!window.news || !window.news.news) {
                 newsContainer.style.display = 'none';
                 return;
             }
-            
+
             const now = new Date();
             const activeNews = window.news.news.filter(newsItem => {
                 if (!newsItem.active) return false;
-                
+
                 const startDate = new Date(newsItem.startDate);
                 const durationMs = (newsItem.duration.days * 24 * 60 * 60 * 1000) +
                                  (newsItem.duration.hours * 60 * 60 * 1000) +
                                  (newsItem.duration.minutes * 60 * 1000);
                 const endDate = new Date(startDate.getTime() + durationMs);
-                
+
                 return now >= startDate && now <= endDate;
             });
-            
+
             if (activeNews.length === 0) {
                 newsContainer.style.display = 'none';
                 return;
             }
-            
+
             // Sort by priority (lower number = higher priority)
             activeNews.sort((a, b) => a.priority - b.priority);
-            
+
             // Clear existing messages
             newsContainer.innerHTML = '';
-            
+
             // Create news message elements
             activeNews.forEach((newsItem, index) => {
                 const messageElement = document.createElement('p');
@@ -400,9 +413,9 @@
                 }
                 newsContainer.appendChild(messageElement);
             });
-            
+
             newsContainer.style.display = 'block';
-            
+
             // Start cycling if there are multiple news items
             if (activeNews.length > 1) {
                 currentNewsIndex = 0;
@@ -414,76 +427,124 @@
             if (newsInterval) {
                 clearInterval(newsInterval);
             }
-            
+
             newsInterval = setInterval(() => {
                 const messages = document.querySelectorAll('.news-message');
                 if (messages.length === 0) return;
-                
+
                 // Remove active class from current message
                 messages.forEach(msg => msg.classList.remove('active', 'next'));
-                
+
                 // Add next class to current message (slide up)
                 messages[currentNewsIndex].classList.add('next');
-                
+
                 // Move to next message
                 currentNewsIndex = (currentNewsIndex + 1) % totalNews;
-                
+
                 // Add active class to next message (slide in from bottom)
                 setTimeout(() => {
                     messages[currentNewsIndex].classList.add('active');
                 }, 50);
-                
+
             }, 4000); // Change every 4 seconds
         }
-        
+
         // Display news on page load
         displayNews();
-        
-    function searchWaystones() {
-        const query = document.getElementById("searchBar").value.toLowerCase();
-        const rows = document.querySelectorAll("tbody tr");
-        rows.forEach(row => {
-            let text = row.textContent.toLowerCase();
-            row.style.display = text.includes(query) ? "" : "none";
+
+        function parsePosition(posStr) {
+            return posStr.slice(1, -1).split(',').map(Number);
+        }
+        function closestWaystones() {
+            const xInput = document.getElementById("positionBarX").value;
+            const yInput = document.getElementById("positionBarY").value;
+            const zInput = document.getElementById("positionBarZ").value;
+            const rows = document.querySelectorAll("tbody tr");
+
+            const x = parseFloat(xInput);
+            const y = parseFloat(yInput);
+            const z = parseFloat(zInput);
+
+            if (xInput === '' || yInput === '' || zInput === '' || isNaN(x) || isNaN(y) || isNaN(z)) {
+                searchWaystones();
+                return;
+            }
+
+            const waystoneDistances = [];
+
+            rows.forEach(row => {
+                const posText = row.cells[2].textContent;
+                const pos = parsePosition(posText);
+                if (pos.length !== 3) return;
+
+                const distance = Math.sqrt(
+                    Math.pow(pos[0] - x, 2) +
+                    Math.pow(pos[1] - y, 2) +
+                    Math.pow(pos[2] - z, 2)
+                );
+                waystoneDistances.push({
+                    row: row,
+                    distance: distance
+                });
+            });
+
+            // Sort the array by distance, from smallest to largest
+            waystoneDistances.sort((a, b) => a.distance - b.distance);
+
+            // Re-append the sorted rows to the tbody
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = ''; // Clear the current table body
+            waystoneDistances.forEach(item => {
+                tbody.appendChild(item.row);
+                item.row.style.display = ""; // Ensure all sorted rows are visible
+            });
+
+        }
+        function searchWaystones() {
+            const query = document.getElementById("searchBar").value.toLowerCase();
+            const rows = document.querySelectorAll("tbody tr");
+            rows.forEach(row => {
+                let text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? "" : "none";
+            });
+        }
+        function showContributeModal() {
+            const modal = document.getElementById('contributeModal');
+            modal.style.display = 'block';
+        }
+        function closeContributeModal() {
+            const modal = document.getElementById('contributeModal');
+            modal.style.display = 'none';
+        }
+        window.onclick = function(event) {
+            const contributeModal = document.getElementById('contributeModal');
+            if (event.target == contributeModal) {
+                closeContributeModal();
+            }
+        }
+        // Modal logic
+        const deletionBtn = document.getElementById('deletion-request-btn');
+        const deletionModal = document.getElementById('deletion-modal');
+        const closeDeletionModal = document.getElementById('close-deletion-modal');
+        deletionBtn.onclick = () => { deletionModal.style.display = 'flex'; };
+        closeDeletionModal.onclick = () => { deletionModal.style.display = 'none'; };
+        deletionModal && deletionModal.addEventListener('click', function(e) {
+        if (e.target === deletionModal) deletionModal.style.display = 'none';
         });
-    }
-    function showContributeModal() {
-        const modal = document.getElementById('contributeModal');
-        modal.style.display = 'block';
-    }
-    function closeContributeModal() {
-        const modal = document.getElementById('contributeModal');
-        modal.style.display = 'none';
-    }
-    window.onclick = function(event) {
-        const contributeModal = document.getElementById('contributeModal');
-        if (event.target == contributeModal) {
-            closeContributeModal();
-        }
-    }
-    // Modal logic
-    const deletionBtn = document.getElementById('deletion-request-btn');
-    const deletionModal = document.getElementById('deletion-modal');
-    const closeDeletionModal = document.getElementById('close-deletion-modal');
-    deletionBtn.onclick = () => { deletionModal.style.display = 'flex'; };
-    closeDeletionModal.onclick = () => { deletionModal.style.display = 'none'; };
-    deletionModal && deletionModal.addEventListener('click', function(e) {
-      if (e.target === deletionModal) deletionModal.style.display = 'none';
-    });
-    window.addEventListener('DOMContentLoaded', () => {
-        const tbody = document.querySelector('tbody');
-        tbody.innerHTML = '';
-        for (const ws of window.waystones) {
-            const tr = document.createElement('tr');
-            const owner = ws.Owner.replace(/^Owner: /, '');
-            tr.innerHTML = `
-                <td>${owner}</td>
-                <td>${ws.Name}</td>
-                <td>[${ws.position.join(", ")}]</td>
-            `;
-            tbody.appendChild(tr);
-        }
-    });
+        window.addEventListener('DOMContentLoaded', () => {
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = '';
+            for (const ws of window.waystones) {
+                const tr = document.createElement('tr');
+                const owner = ws.Owner.replace(/^Owner: /, '');
+                tr.innerHTML = `
+                    <td>${owner}</td>
+                    <td>${ws.Name}</td>
+                    <td>[${ws.position.join(", ")}]</td>
+                `;
+                tbody.appendChild(tr);
+            }
+        });
     </script>
 </body>
-</html> 
+</html>
