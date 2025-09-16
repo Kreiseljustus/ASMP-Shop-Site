@@ -142,6 +142,7 @@
         align-items: center;
         gap: 15px;
         margin-bottom: 20px;
+        color: #fff;
     }
     #searchBar {
         width: 100%;
@@ -359,7 +360,7 @@
             rows.sort((a, b) => {
                 let valA = a.cells[column].textContent.trim();
                 let valB = b.cells[column].textContent.trim();
-                
+
                 if (!isNaN(valA) && !isNaN(valB)) {
                     valA = parseFloat(valA);
                     valB = parseFloat(valB);
@@ -382,31 +383,40 @@
         }
 
         function searchItems() {
-            const query = document.getElementById("searchBar").value.toLowerCase();
+            const query = document.getElementById("searchBar").value.toLowerCase().trim();
             const rows = document.querySelectorAll("tbody tr");
+            const showBuying = document.getElementById("showBuying").checked;
+            const showSelling = document.getElementById("showSelling").checked;
+            const showOutOfStock = document.getElementById("showOutOfStock").checked;
 
             rows.forEach(row => {
-                let text = row.textContent.toLowerCase();
-                row.style.display = text.includes(query) ? "" : "none";
+                const [owner, item, action, price, amount, position, dimension, ] = Array.from(row.children).map(td => td.textContent);
+                const text = (owner + " " + item + " " + action + " " + price + " " + amount + " " + position + " " + dimension).toLowerCase();
+                let display = "";
+                if (query && !text.includes(query)) display = "none";
+                if (!showBuying && action === "Buying") display = "none";
+                if (!showSelling && action === "Selling") display = "none";
+                if (!showOutOfStock && action === "Out of Stock") display = "none";
+                row.style.display = display;
             });
         }
 
         function showPriceHistory(itemName) {
             const modal = document.getElementById('priceModal');
             const itemHistory = window.priceHistory[itemName]?.history || [];
-            
+
             modal.style.display = 'block';
-            
+
             const ctx = document.getElementById('priceChart');
-            
+
             let dates;
             let prices;
-            
+
             if (itemHistory.length === 0) {
                 const currentItem = window.items.find(item => item.item === itemName);
                 const currentPrice = currentItem ? currentItem.price : 0;
-                
-                
+
+
                 const now = new Date();
                 dates = Array.from({length: 10}, (_, i) => {
                     const date = new Date(now);
@@ -418,11 +428,11 @@
                 dates = itemHistory.map(h => new Date(h.timestamp).toLocaleDateString());
                 prices = itemHistory.map(h => h.averagePrice);
             }
-            
+
             if (currentChart) {
                 currentChart.destroy();
             }
-            
+
             currentChart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -521,36 +531,36 @@
 
         function displayNews() {
             const newsContainer = document.getElementById('newsContainer');
-            
+
             if (!window.news || !window.news.news) {
                 newsContainer.style.display = 'none';
                 return;
             }
-            
+
             const now = new Date();
             const activeNews = window.news.news.filter(newsItem => {
                 if (!newsItem.active) return false;
-                
+
                 const startDate = new Date(newsItem.startDate);
                 const durationMs = (newsItem.duration.days * 24 * 60 * 60 * 1000) +
                                  (newsItem.duration.hours * 60 * 60 * 1000) +
                                  (newsItem.duration.minutes * 60 * 1000);
                 const endDate = new Date(startDate.getTime() + durationMs);
-                
+
                 return now >= startDate && now <= endDate;
             });
-            
+
             if (activeNews.length === 0) {
                 newsContainer.style.display = 'none';
                 return;
             }
-            
+
             // Sort by priority (lower number = higher priority)
             activeNews.sort((a, b) => a.priority - b.priority);
-            
+
             // Clear existing messages
             newsContainer.innerHTML = '';
-            
+
             // Create news message elements
             activeNews.forEach((newsItem, index) => {
                 const messageElement = document.createElement('p');
@@ -561,9 +571,9 @@
                 }
                 newsContainer.appendChild(messageElement);
             });
-            
+
             newsContainer.style.display = 'block';
-            
+
             // Start cycling if there are multiple news items
             if (activeNews.length > 1) {
                 currentNewsIndex = 0;
@@ -575,31 +585,31 @@
             if (newsInterval) {
                 clearInterval(newsInterval);
             }
-            
+
             newsInterval = setInterval(() => {
                 const messages = document.querySelectorAll('.news-message');
                 if (messages.length === 0) return;
-                
+
                 // Remove active class from current message
                 messages.forEach(msg => msg.classList.remove('active', 'next'));
-                
+
                 // Add next class to current message (slide up)
                 messages[currentNewsIndex].classList.add('next');
-                
+
                 // Move to next message
                 currentNewsIndex = (currentNewsIndex + 1) % totalNews;
-                
+
                 // Add active class to next message (slide in from bottom)
                 setTimeout(() => {
                     messages[currentNewsIndex].classList.add('active');
                 }, 50);
-                
+
             }, 4000); // Change every 4 seconds
         }
 
         window.addEventListener('DOMContentLoaded', () => {
             displayNews();
-            
+
             const tbody = document.querySelector('tbody');
             tbody.innerHTML = '';
             for (const item of window.items) {
@@ -658,6 +668,14 @@
                 <input type="text" id="searchBar" placeholder="Search items..." oninput="searchItems()">
                 <button class="contribute-btn" onclick="showContributeModal()">Contribute</button>
                 <button id="deletion-request-btn" class="contribute-btn deletion-btn" type="button">Request Shop/Waystone Deletion</button>
+            </div>
+            <div class="search-container">
+                <label for="showBuying">Show Buying</label>
+                <input type="checkbox" id="showBuying" checked onchange="searchItems()">
+                <label for="showSelling">Show Selling</label>
+                <input type="checkbox" id="showSelling" checked onchange="searchItems()">
+                <label for="showOutOfStock">Show Out of Stock</label>
+                <input type="checkbox" id="showOutOfStock" onchange="searchItems()">
             </div>
             <table>
                 <thead>
@@ -721,4 +739,4 @@
         });
     </script>
 </body>
-</html> 
+</html>
