@@ -35,20 +35,17 @@ console.info = (...args) => {
 app.use(express.json());
 
 const FILE_PATH = "items.json";
-const PRICE_HISTORY_PATH = "priceHistory.json";
 const WAYSTONES_PATH = "waystones.json";
 const IGNORED_WAYSTONES_PATH = "ignoredWaystones.json";
 const IGNORED_SHOPS_PATH = "ignoredShops.json";
 const NEWS_PATH = "news.json";
 
 let items = loadItems();
-let priceHistory = loadPriceHistory();
 let waystones = loadWaystones();
 let ignoredWaystones = loadIgnoredWaystones();
 let ignoredShops = loadIgnoredShops();
 let news = loadNews();
 setInterval(() => {
-    priceHistory = loadPriceHistory();
     waystones = loadWaystones();
     ignoredWaystones = loadIgnoredWaystones();
     ignoredShops = loadIgnoredShops();
@@ -67,7 +64,6 @@ app.get('/asmp/shops', (req, res) => {
     let html = fs.readFileSync(__dirname + '/index.html', 'utf-8');
     // Inject items, priceHistory, and news as JSON into the template
     html = html.replace('<!--ITEMS_JSON-->', JSON.stringify(items));
-    html = html.replace('<!--PRICE_HISTORY_JSON-->', JSON.stringify(priceHistory));
     html = html.replace('<!--NEWS_JSON-->', JSON.stringify(news));
     res.send(html);
 });
@@ -154,7 +150,6 @@ app.post('/asmp/post', (req, res) => {
         }
     });
 
-    updatePriceHistory(items);
     saveItems();
 
     // Handle waystones (only if waystones data is provided)
@@ -279,58 +274,6 @@ function loadItems() {
 
 function saveItems() {
     fs.writeFileSync(FILE_PATH, JSON.stringify(items, null, 2), 'utf-8');
-}
-
-function loadPriceHistory() {
-    if (fs.existsSync(PRICE_HISTORY_PATH)) {
-        const data = fs.readFileSync(PRICE_HISTORY_PATH, 'utf-8');
-        return JSON.parse(data);
-    }
-    return {};
-}
-
-function savePriceHistory() {
-    fs.writeFileSync(PRICE_HISTORY_PATH, JSON.stringify(priceHistory, null, 2), 'utf-8');
-}
-
-function updatePriceHistory(items) {
-    const timestamp = new Date().toISOString();
-    const itemPrices = {};
-
-    items.forEach(item => {
-        if (!itemPrices[item.item]) {
-            itemPrices[item.item] = {
-                totalPrice: 0,
-                count: 0
-            };
-        }
-        itemPrices[item.item].totalPrice += parseFloat(item.price);
-        itemPrices[item.item].count += 1;
-    });
-
-    Object.keys(itemPrices).forEach(itemName => {
-        if (!priceHistory[itemName]) {
-            priceHistory[itemName] = { history: [] };
-        }
-
-        const averagePrice = itemPrices[itemName].totalPrice / itemPrices[itemName].count;
-        
-        // Only add to history if price changed or this is the first entry
-        const lastEntry = priceHistory[itemName].history[priceHistory[itemName].history.length - 1];
-        if (!lastEntry || lastEntry.averagePrice !== averagePrice) {
-            priceHistory[itemName].history.push({
-                timestamp: timestamp,
-                averagePrice: averagePrice,
-                numberOfShops: itemPrices[itemName].count
-            });
-
-            if (priceHistory[itemName].history.length > 30) {
-                priceHistory[itemName].history.shift();
-            }
-        }
-    });
-
-    savePriceHistory();
 }
 
 function loadWaystones() {
