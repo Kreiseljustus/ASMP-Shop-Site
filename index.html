@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ASMP Shops</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
     @font-face {
         font-family: 'Minecraftia';
@@ -244,11 +244,7 @@
     .close:hover {
         color: white;
     }
-    .chart-container {
-        position: relative;
-        height: 400px;
-        width: 100%;
-    }
+    
     button {
         background-color: rgba(255, 255, 255, 0.9);
         border: none;
@@ -343,14 +339,13 @@
     }
     </style>
     <script id="items-data" type="application/json"><!--ITEMS_JSON--></script>
-    <script id="price-history-data" type="application/json"><!--PRICE_HISTORY_JSON--></script>
+    
     <script id="news-data" type="application/json"><!--NEWS_JSON--></script>
     <script>
         window.items = JSON.parse(document.getElementById('items-data').textContent);
-        window.priceHistory = JSON.parse(document.getElementById('price-history-data').textContent);
         window.news = JSON.parse(document.getElementById('news-data').textContent);
         let sortOrder = {};
-        let currentChart = null;
+        
     </script>
     <script>
         function sortTable(column) {
@@ -401,108 +396,7 @@
             });
         }
 
-        function showPriceHistory(itemName) {
-            const modal = document.getElementById('priceModal');
-            const itemHistory = window.priceHistory[itemName]?.history || [];
-
-            modal.style.display = 'block';
-
-            const ctx = document.getElementById('priceChart');
-
-            let dates;
-            let prices;
-
-            if (itemHistory.length === 0) {
-                const currentItem = window.items.find(item => item.item === itemName);
-                const currentPrice = currentItem ? currentItem.price : 0;
-
-
-                const now = new Date();
-                dates = Array.from({length: 10}, (_, i) => {
-                    const date = new Date(now);
-                    date.setDate(date.getDate() - (30 * (9-i) / 9));
-                    return date.toLocaleDateString();
-                });
-                prices = Array(10).fill(currentPrice);
-            } else {
-                dates = itemHistory.map(h => new Date(h.timestamp).toLocaleDateString());
-                prices = itemHistory.map(h => h.averagePrice);
-            }
-
-            if (currentChart) {
-                currentChart.destroy();
-            }
-
-            currentChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: dates,
-                    datasets: [{
-                        label: 'Average Price',
-                        data: prices,
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.1,
-                        fill: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Price History for ' + itemName,
-                            color: 'white',
-                            font: {
-                                size: 16
-                            }
-                        },
-                        legend: {
-                            labels: {
-                                color: 'white',
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: 'white',
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: 'white',
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('priceModal');
-            modal.style.display = 'none';
-            if (currentChart) {
-                currentChart.destroy();
-                currentChart = null;
-            }
-        }
+        
 
         function showContributeModal() {
             const modal = document.getElementById('contributeModal');
@@ -516,11 +410,7 @@
 
         // Add event listener for clicking outside modal
         window.onclick = function(event) {
-            const priceModal = document.getElementById('priceModal');
             const contributeModal = document.getElementById('contributeModal');
-            if (event.target == priceModal) {
-                closeModal();
-            }
             if (event.target == contributeModal) {
                 closeContributeModal();
             }
@@ -634,7 +524,7 @@
                     <td>${item.amount}</td>
                     <td>[${item.position.join(", ")}]</td>
                     <td>${dimension}</td>
-                    <td><button onclick="showPriceHistory('${item.item}')">Show History</button></td>
+                    <td><button onclick="addWaypoint('${item.item} ~ ${item.Owner}', ${item.position[0]}, ${item.position[1]}, ${item.position[2]}, ${item.dimension})">Add Waypoint</button></td>
                 `;
                 tbody.appendChild(tr);
             }
@@ -648,6 +538,27 @@
                 });
             });
         });
+
+        // Send waypoint data to the local server for Xaero's Minimap
+        function addWaypoint(name, x, y, z, dimension) {
+            fetch('http://localhost:52629/waypoint', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, x, y, z, dimension })
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Waypoint sent to Minecraft!');
+                } else {
+                    alert('Failed to send waypoint. Make sure Xaero\'s Minimap is installed and enabled and ASMP ShopGet is updated');
+                }
+            })
+            .catch(() => {
+                alert('Failed to send waypoint. Make sure Xaero\'s Minimap is installed and enabled and ASMP ShopGet is updated');
+            });
+        }
     </script>
 </head>
 <body>
@@ -687,7 +598,7 @@
                         <th onclick="sortTable(4)">Amount</th>
                         <th onclick="sortTable(5)">Position</th>
                         <th onclick="sortTable(6)">Dimension</th>
-                        <th>History</th>
+                        <th>Waypoint</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -698,14 +609,7 @@
         <a href="https://discord.com/events/1337625910081490964/1410033355537387541" target="_blank" class="advertisement">
             <img src="/asmp/ad2.jpg" alt="Advertisement 2">
         </a>
-        <div id="priceModal" class="modal">
-            <div class="modal-content">
-                <span class="close" onclick="closeModal()">&times;</span>
-                <div class="chart-container">
-                    <canvas id="priceChart"></canvas>
-                </div>
-            </div>
-        </div>
+        
         <div id="contributeModal" class="modal">
             <div class="contribute-modal-content">
                 <span class="close" onclick="closeContributeModal()">&times;</span>
