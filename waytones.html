@@ -334,6 +334,7 @@
                         <th>Owner</th>
                         <th>Name</th>
                         <th>Position</th>
+                        <th>Waypoint</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -541,10 +542,32 @@
                     <td>${owner}</td>
                     <td>${ws.Name}</td>
                     <td>[${ws.position.join(", ")}]</td>
+                    <td><button onclick="addWaypoint('${ws.Name}', ${ws.position[0]}, ${ws.position[1]}, ${ws.position[2]}, 0)">Add Waypoint</button></td>
                 `;
                 tbody.appendChild(tr);
             }
         });
+        
+        // Send waypoint data to the local server for Xaero's Minimap
+        function addWaypoint(name, x, y, z, dimension) {
+            fetch('http://localhost:52629/waypoint', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, x, y, z, dimension })
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Waypoint sent to Minecraft!');
+                } else {
+                    alert('Failed to send waypoint.');
+                }
+            })
+            .catch(() => {
+                alert('Failed to send waypoint.');
+            });
+        }
     </script>
 </body>
 </html>
