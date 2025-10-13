@@ -345,6 +345,7 @@
         window.items = JSON.parse(document.getElementById('items-data').textContent);
         window.news = JSON.parse(document.getElementById('news-data').textContent);
         let sortOrder = {};
+        let urlLoaded = false;
         
     </script>
     <script>
@@ -377,7 +378,7 @@
             });
         }
 
-        function searchItems() {
+        function searchItems(updateUrl = true) {
             const query = document.getElementById("searchBar").value.toLowerCase().trim();
             const rows = document.querySelectorAll("tbody tr");
             const showBuying = document.getElementById("showBuying").checked;
@@ -387,13 +388,55 @@
             rows.forEach(row => {
                 const [owner, item, action, price, amount, position, dimension, ] = Array.from(row.children).map(td => td.textContent);
                 const text = (owner + " " + item + " " + action + " " + price + " " + amount + " " + position + " " + dimension).toLowerCase();
-                let display = "";
-                if (query && !text.includes(query)) display = "none";
-                if (!showBuying && action === "Buying") display = "none";
-                if (!showSelling && action === "Selling") display = "none";
-                if (!showOutOfStock && action === "Out of Stock") display = "none";
-                row.style.display = display;
+                
+                let shouldShow = true;
+                
+                if (query && !text.includes(query)) {
+                    shouldShow = false;
+                }
+                
+                if (!showBuying && action === "Buying") {
+                    shouldShow = false;
+                }
+                if (!showSelling && action === "Selling") {
+                    shouldShow = false;
+                }
+                if (!showOutOfStock && action === "Out of Stock") {
+                    shouldShow = false;
+                }
+                
+                row.style.display = shouldShow ? "" : "none";
             });
+
+            if (updateUrl) {
+                updateURL();
+            }
+        }
+
+        function updateURL() {
+            const query = document.getElementById("searchBar").value.trim();
+            const url = new URL(window.location);
+            
+            if (query) {
+                url.searchParams.set('q', query);
+            } else {
+                url.searchParams.delete('q');
+            }
+            
+            window.history.replaceState({}, '', url);
+        }
+
+        function loadSearchFromURL() {
+            if (urlLoaded) return;
+            urlLoaded = true;
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const query = urlParams.get('q');
+            
+            if (query) {
+                document.getElementById("searchBar").value = query;
+                searchItems(false);
+            }
         }
 
         
@@ -529,6 +572,8 @@
                 tbody.appendChild(tr);
             }
 
+            loadSearchFromURL();
+
             // Handle advertisement images - hide divs if images fail to load
             const adImages = document.querySelectorAll('.advertisement img');
             adImages.forEach(img => {
@@ -586,7 +631,7 @@
                 <label for="showSelling">Show Selling</label>
                 <input type="checkbox" id="showSelling" checked onchange="searchItems()">
                 <label for="showOutOfStock">Show Out of Stock</label>
-                <input type="checkbox" id="showOutOfStock" onchange="searchItems()">
+                <input type="checkbox" id="showOutOfStock" checked onchange="searchItems()">
             </div>
             <table>
                 <thead>
