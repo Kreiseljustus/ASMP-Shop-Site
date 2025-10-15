@@ -167,7 +167,8 @@ app.post('/asmp/post', (req, res) => {
             updatedWaystones.push({
                 Owner: ws.Owner,
                 Name: ws.Name,
-                position: ws.position
+                position: ws.position,
+                dimension: ws.dimension
             });
         }
         waystones = updatedWaystones;

@@ -334,6 +334,7 @@
                         <th>Owner</th>
                         <th>Name</th>
                         <th>Position</th>
+                        <th>Dimension</th>
                         <th>Waypoint</th>
                     </tr>
                 </thead>
@@ -538,11 +539,19 @@
             for (const ws of window.waystones) {
                 const tr = document.createElement('tr');
                 const owner = ws.Owner.replace(/^Owner: /, '');
+                
+                let dimension;
+                if (ws.dimension == 0) dimension = "Overworld";
+                else if (ws.dimension == 1) dimension = "Nether";
+                else if (ws.dimension == 2) dimension = "End";
+                else dimension = "Unknown (how)";
+                
                 tr.innerHTML = `
                     <td>${owner}</td>
                     <td>${ws.Name}</td>
                     <td>[${ws.position.join(", ")}]</td>
-                    <td><button onclick="addWaypoint('${ws.Name}', ${ws.position[0]}, ${ws.position[1]}, ${ws.position[2]}, 0)">Add Waypoint</button></td>
+                    <td>${dimension}</td>
+                    <td><button onclick="addWaypoint('${ws.Name}', ${ws.position[0]}, ${ws.position[1]}, ${ws.position[2]}, ${ws.dimension || 0})">Add Waypoint</button></td>
                 `;
                 tbody.appendChild(tr);
             }
