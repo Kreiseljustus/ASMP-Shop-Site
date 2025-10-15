@@ -573,6 +573,8 @@
             }
 
             loadSearchFromURL();
+            
+            searchItems(false);
 
             // Handle advertisement images - hide divs if images fail to load
             const adImages = document.querySelectorAll('.advertisement img');
@@ -627,11 +629,11 @@
             </div>
             <div class="search-container">
                 <label for="showBuying">Show Buying</label>
-                <input type="checkbox" id="showBuying" checked onchange="searchItems()">
+                <input type="checkbox" id="showBuying" onchange="searchItems()">
                 <label for="showSelling">Show Selling</label>
                 <input type="checkbox" id="showSelling" checked onchange="searchItems()">
                 <label for="showOutOfStock">Show Out of Stock</label>
-                <input type="checkbox" id="showOutOfStock" checked onchange="searchItems()">
+                <input type="checkbox" id="showOutOfStock" onchange="searchItems()">
             </div>
             <table>
                 <thead>
