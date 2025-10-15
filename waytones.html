@@ -104,8 +104,9 @@
         align-items: center;
         gap: 15px;
         margin-bottom: 20px;
+        color: #fff;
     }
-    .search-container input  {
+    #searchBar {
         width: 100%;
         max-width: 300px;
         padding: 12px 20px;
@@ -116,7 +117,7 @@
         transition: all 0.3s;
         font-family: inherit;
     }
-    .search-container input :focus {
+    #searchBar:focus {
         outline: none;
         box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         background: rgba(255, 255, 255, 1);
@@ -304,6 +305,21 @@
     .news-priority-3 {
         color: #f44336;
     }
+    select {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+        font-family: 'Minecraftia', Arial, sans-serif;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+    select:focus {
+        outline: none;
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 1);
+    }
     </style>
 </head>
 <body>
@@ -321,6 +337,15 @@
                 <input type="text" id="searchBar" placeholder="Search waystones..." oninput="searchWaystones()">
                 <button class="contribute-btn" onclick="showContributeModal()">Contribute</button>
                 <button id="deletion-request-btn" class="contribute-btn deletion-btn" type="button">Request Shop/Waystone Deletion</button>
+            </div>
+            <div class="search-container">
+                <label for="dimensionFilter">Filter by Dimension:</label>
+                <select id="dimensionFilter" onchange="searchWaystones()">
+                    <option value="">All Dimensions</option>
+                    <option value="Overworld">Overworld</option>
+                    <option value="Nether">Nether</option>
+                    <option value="End">End</option>
+                </select>
             </div>
             <div class="search-container" id="position-container">
                 Sort by closest to:
@@ -498,16 +523,35 @@
             tbody.innerHTML = ''; // Clear the current table body
             waystoneDistances.forEach(item => {
                 tbody.appendChild(item.row);
-                item.row.style.display = ""; // Ensure all sorted rows are visible
+                // Apply search and dimension filters after sorting
+                const query = document.getElementById("searchBar").value.toLowerCase();
+                const dimensionFilter = document.getElementById("dimensionFilter").value;
+                let text = item.row.textContent.toLowerCase();
+                let shouldShow = text.includes(query);
+                
+                if (dimensionFilter) {
+                    const dimension = item.row.cells[3].textContent;
+                    shouldShow = shouldShow && dimension === dimensionFilter;
+                }
+                
+                item.row.style.display = shouldShow ? "" : "none";
             });
 
         }
         function searchWaystones() {
             const query = document.getElementById("searchBar").value.toLowerCase();
+            const dimensionFilter = document.getElementById("dimensionFilter").value;
             const rows = document.querySelectorAll("tbody tr");
             rows.forEach(row => {
                 let text = row.textContent.toLowerCase();
-                row.style.display = text.includes(query) ? "" : "none";
+                let shouldShow = text.includes(query);
+                
+                if (dimensionFilter) {
+                    const dimension = row.cells[3].textContent; // Dimension is the 4th column (index 3)
+                    shouldShow = shouldShow && dimension === dimensionFilter;
+                }
+                
+                row.style.display = shouldShow ? "" : "none";
             });
         }
         function showContributeModal() {

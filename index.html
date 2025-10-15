@@ -337,6 +337,21 @@
     .news-priority-3 {
         color: #f44336;
     }
+    select {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
+        font-family: 'Minecraftia', Arial, sans-serif;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+    select:focus {
+        outline: none;
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 1);
+    }
     </style>
     <script id="items-data" type="application/json"><!--ITEMS_JSON--></script>
     
@@ -384,6 +399,7 @@
             const showBuying = document.getElementById("showBuying").checked;
             const showSelling = document.getElementById("showSelling").checked;
             const showOutOfStock = document.getElementById("showOutOfStock").checked;
+            const dimensionFilter = document.getElementById("dimensionFilter").value;
 
             rows.forEach(row => {
                 const [owner, item, action, price, amount, position, dimension, ] = Array.from(row.children).map(td => td.textContent);
@@ -402,6 +418,9 @@
                     shouldShow = false;
                 }
                 if (!showOutOfStock && action === "Out of Stock") {
+                    shouldShow = false;
+                }
+                if (dimensionFilter && dimension !== dimensionFilter) {
                     shouldShow = false;
                 }
                 
@@ -634,6 +653,7 @@
                 <input type="checkbox" id="showSelling" checked onchange="searchItems()">
                 <label for="showOutOfStock">Show Out of Stock</label>
                 <input type="checkbox" id="showOutOfStock" onchange="searchItems()">
+                <label for="dimensionFilter">Filter by Dimension:</label>
             </div>
             <table>
                 <thead>
