@@ -157,6 +157,13 @@ app.post('/asmp/post', (req, res) => {
         let updatedWaystones = [...waystones];
         for (const ws of waystonesData) {
             // Check for 3x3x3 proximity in updatedWaystones (old + already-accepted new)
+
+            if(ws.Name.length > 40) {
+                console.log("Waystone name is too long: " + ws.Name);
+                ws.Name = ws.Name.slice(0, 40);
+            }
+
+            // Check if the waystone is already in the list 
             if (updatedWaystones.some(existing =>
                 Math.abs(existing.position[0] - ws.position[0]) <= 1 &&
                 Math.abs(existing.position[1] - ws.position[1]) <= 1 &&

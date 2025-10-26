@@ -407,8 +407,12 @@
                 
                 let shouldShow = true;
                 
-                if (query && !text.includes(query)) {
-                    shouldShow = false;
+                if (query) {
+                    const searchTerms = query.split(';').map(term => term.trim()).filter(term => term.length > 0);
+                    const matchesAnyTerm = searchTerms.some(term => text.includes(term));
+                    if (!matchesAnyTerm) {
+                        shouldShow = false;
+                    }
                 }
                 
                 if (!showBuying && action === "Buying") {
@@ -593,6 +597,7 @@
 
             loadSearchFromURL();
             
+            // Apply initial filtering based on checkbox defaults
             searchItems(false);
 
             // Handle advertisement images - hide divs if images fail to load
@@ -642,7 +647,7 @@
         </a>
         <div class="table-container">
             <div class="search-container">
-                <input type="text" id="searchBar" placeholder="Search items..." oninput="searchItems()">
+                <input type="text" id="searchBar" placeholder="Search items (use ; to separate multiple items)..." oninput="searchItems()">
                 <button class="contribute-btn" onclick="showContributeModal()">Contribute</button>
                 <button id="deletion-request-btn" class="contribute-btn deletion-btn" type="button">Request Shop/Waystone Deletion</button>
             </div>
@@ -654,6 +659,12 @@
                 <label for="showOutOfStock">Show Out of Stock</label>
                 <input type="checkbox" id="showOutOfStock" onchange="searchItems()">
                 <label for="dimensionFilter">Filter by Dimension:</label>
+                <select id="dimensionFilter" onchange="searchItems()">
+                    <option value="">All Dimensions</option>
+                    <option value="Overworld">Overworld</option>
+                    <option value="Nether">Nether</option>
+                    <option value="End">End</option>
+                </select>
             </div>
             <table>
                 <thead>
