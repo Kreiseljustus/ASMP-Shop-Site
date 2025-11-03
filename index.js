@@ -150,9 +150,9 @@ app.post('/asmp/post', (req, res) => {
         for (const ws of waystonesData) {
             // Check for 3x3x3 proximity in updatedWaystones (old + already-accepted new)
 
-            if(ws.Name.length > 40) {
+            if(ws.Name.length > 50) {
                 console.log("Waystone name is too long: " + ws.Name);
-                ws.Name = ws.Name.slice(0, 40);
+                ws.Name = ws.Name.slice(0, 50);
             }
 
             // Check if the waystone is already in the list 
@@ -279,7 +279,19 @@ function saveItems() {
 function loadWaystones() {
     if (fs.existsSync(WAYSTONES_PATH)) {
         const data = fs.readFileSync(WAYSTONES_PATH, 'utf-8');
-        return JSON.parse(data);
+        const waystones = JSON.parse(data);
+        // Trim waystone names longer than 50 characters
+        let needsSave = false;
+        waystones.forEach(ws => {
+            if (ws.Name && ws.Name.length > 50) {
+                ws.Name = ws.Name.slice(0, 50);
+                needsSave = true;
+            }
+        });
+        if (needsSave) {
+            fs.writeFileSync(WAYSTONES_PATH, JSON.stringify(waystones, null, 2), 'utf-8');
+        }
+        return waystones;
     }
     return [];
 }
