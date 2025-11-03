@@ -77,14 +77,6 @@ app.get('/asmp/waytones', (req, res) => {
     res.send(html);
 });
 
-app.get('/asmp/info', (req, res) => {
-    console.log("GET /asmp/info opened");
-    incrementVisit('info');
-    let html = fs.readFileSync(__dirname + '/info.html', 'utf-8');
-    html = html.replace('<!--NEWS_JSON-->', JSON.stringify(news));
-    res.send(html);
-});
-
 app.get('/asmp/waystones', (req, res) => {
     console.log("GET /asmp/waystones opened");
     incrementVisit('waystones');
